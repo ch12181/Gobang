@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        
+        <meta charset="UTF-8">
+        <title>Gobang</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        
+        <style type = "text/css">
+            
+            #chessBoard{
+                
+                padding: 10px 10px;
+                margin-right: 100px;
+                margin-left: 100px;
+                
+            }
+            
+            #myCanvas{
+                
+                box-shadow: -2px -2px 2px #EFEFEF, 5px 5px 5px #B9B9B9;
+                
+            }
+            
+            .box {
+                
+                border:1px solid #cccccc;
+                width:250px;
+                height:400px;
+                background-color:#FFFFFF;
+                padding:5px;
+                overflow:auto;
+            }
+            
+        </style>
+        
+    </head>
+    
+    <body>
+        
+        <div class = "row container-fluid">
+            
+            <div class = "col-md-auto" id = "chessBoard">
+            
+                <canvas id = "myCanvas" width = "590" height = "590" onclick = "play(event)"></canvas>
+            
+            </div>
+            
+            <div class = "col-3">
+                
+                <br><br>
+                <div class = "box" id = "textbox"></div>
+                <br><br>
+                <button type = "button" class = "btn btn-outline-primary btn-lg" onclick = "restartBtn()">
+                    <span class = "glyphicon glyphicon-refresh" aria-hidden="true"></span>restart
+                </button>
+                
+            </div>
+            
+            
+            
+        </div>
+        
+        <script type = "text/javascript">
+            
+            //繪製棋盤
+            function drawBoard(){
+                
+                var position_x = 15;
+                var position_y = 15;
+                
+                for(i = 0;i < 15;i++){
+                    
+                    ctx.moveTo(position_x,15);
+                    ctx.lineTo(position_x,575);
+                    ctx.stroke();
+                    
+                    position_x = position_x + 40;
+                    
+                }
+                
+                for(i = 0;i < 15;i++){
+                    
+                    ctx.moveTo(15,position_y);
+                    ctx.lineTo(575,position_y);
+                    ctx.stroke();
+                    
+                    position_y = position_y + 40;
+                    
+                }
+                
+                //在棋盤上標參考點
+                ctx.beginPath();
+                ctx.arc(40 * 3 + 15,40 * 3 + 15,4,0,2 * Math.PI);
+                ctx.fillStyle = "black";
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(40 * 11 + 15,40 * 3 + 15,4,0,2 * Math.PI);
+                ctx.fillStyle = "black";
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(40 * 7 + 15,40 * 7 + 15,4,0,2 * Math.PI);
+                ctx.fillStyle = "black";
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(40 * 3 + 15,40 * 11 + 15,4,0,2 * Math.PI);
+                ctx.fillStyle = "black";
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(40 * 11 + 15,40 * 11 + 15,4,0,2 * Math.PI);
+                ctx.fillStyle = "black";
+                ctx.fill();
+                
+            }
+            
+            //繪製棋子
+            function drawChess(x,y){
+                
+                //判斷是否超出範圍
+                if(x > 14 || y > 14){
+                    
+                    return;
+                    
+                }
+                
+                if(whiteOrBlack == 0){
+                    
+                    //黑棋
+                    chessData[x][y] = 1;
+                    ctx.beginPath();
+                    ctx.arc(40 * x + 15,40 * y + 15,15,0,2 * Math.PI);
+                    var grd = ctx.createRadialGradient(40 * x + 15,40 * y + 15,13,40 * x + 15,40 * y + 15,0);
+                    grd.addColorStop(0, "#0A0A0A");
+                    grd.addColorStop(1, "#636766");
+                    ctx.fillStyle = grd;
+                    ctx.fill();
+                    //ctx.closePath();
+                    
+                    whiteOrBlack = 1;
+                    
+                    $("#textbox").append("<span style=\"background-color:#B0B0B0\">" + step + ". black -> " + "(" + x + " , " + y + ")" + "</span>" + "<br>");
+                    
+                    step++;
+                    
+                }else{
+                    
+                    //白棋
+                    chessData[x][y] = 2;
+                    ctx.beginPath();
+                    ctx.arc(40 * x + 15,40 * y + 15,15,0,2 * Math.PI);
+                    var grd = ctx.createRadialGradient(40 * x + 15,40 * y + 15,13,40 * x + 15,40 * y + 15,0);
+                    grd.addColorStop(0, "#D1D1D1");
+                    grd.addColorStop(1, "#F9F9F9");
+                    ctx.fillStyle = grd;
+                    ctx.fill();
+                    //ctx.closePath();
+                    
+                    whiteOrBlack = 0;
+                    $("#textbox").append(step + ". white -> " + "(" + x + " , " + y + ")" + "<br>");
+                    step++;
+                    
+                }
+                
+            }
+            
+            //判斷是否五連
+            function check(x,y){
+                
+                var count = 1;
+                var i,j;
+                
+                //向右向左搜尋
+                j = y;
+                for(i = x + 1;i < x + 5;i++){
+                    
+                    if(chessData[i][j] == chessData[x][y]){
+                        
+                        count++;
+                        
+                    }else{
+                        
+                        break;
+                        
+                    }
+                    
+                }
+                for(i = x - 1;i > x - 5;i--){
+                    
+                    if(i < 0){
+                        
+                        break;
+                        
+                    }
+                    
+                    if(chessData[i][j] == chessData[x][y]){
+                        
+                        count++;
+                        
+                    }else{
+                        
+                        break;
+                        
+                    }
+                    
+                }
+                if(count == 5){
+                    
+                    return 1;
+                    
+                }
+                
+                //向上向下搜尋
+                count = 1;
+                i = x;
+                for(j = y + 1;j < y + 5;j++){
+                    
+                    if(chessData[i][j] == chessData[x][y]){
+                        
+                        count++;
+                        
+                    }else{
+                        
+                        break;
+                        
+                    }
+                    
+                }
+                for(j = y - 1;j > y - 5;j--){
+                    
+                    if(chessData[i][j] == chessData[x][y]){
+                        
+                        count++;
+                        
+                    }else{
+                        
+                        break;
+                        
+                    }
+                    
+                }
+                if(count == 5){
+                    
+                    return 1;
+                    
+                }
+                
+                //向右上左下搜尋
+                count = 1;
+                j = y - 1;
+                for(i = x + 1;i < x + 5;i++){
+                    
+                    if(chessData[i][j] == chessData[x][y]){
+                        
+                        count++;
+                        
+                    }else{
+                        
+                        break;
+                        
+                    }
+                    
+                    j--;
+                    
+                }
+                j = y + 1;
+                for(i = x - 1;i > x - 5;i--){
+                    
+                    if(i < 0){
+                        
+                        break;
+                        
+                    }
+                    
+                    if(chessData[i][j] == chessData[x][y]){
+                        
+                        count++;
+                        
+                    }else{
+                        
+                        break;
+                        
+                    }
+                    
+                    j++;
+                    
+                }
+                if(count == 5){
+                    
+                    return 1;
+                    
+                }
+                
+                //向左上右下搜尋
+                count = 1;
+                j = y + 1;
+                for(i = x + 1;i < x + 5;i++){
+                    
+                    if(chessData[i][j] == chessData[x][y]){
+                        
+                        count++;
+                        
+                    }else{
+                        
+                        break;
+                        
+                    }
+                    
+                    j++;
+                    
+                }
+                j = y - 1;
+                for(i = x - 1;i > x - 5;i--){
+                    
+                    if(i < 0){
+                        
+                        break;
+                        
+                    }
+                    
+                    if(chessData[i][j] == chessData[x][y]){
+                        
+                        count++;
+                        
+                    }else{
+                        
+                        break;
+                        
+                    }
+                    
+                    j--;
+                    
+                }
+                if(count == 5){
+                    
+                    return 1;
+                    
+                }
+                
+                return 0;
+                
+            }
+            
+            //進行遊戲
+            function play(event){
+                
+                //取得滑鼠點擊的座標
+                var x = (event.clientX - 120) / 40;     // Get the horizontal coordinate
+                var y = (event.clientY - 20) / 40;     // Get the vertical coordinate
+                
+                x = Math.round(x);
+                y = Math.round(y);
+                
+                //判斷該位置是否已有棋子
+                if(chessData[x][y] != 0){
+                    
+                    return;
+                    
+                }
+                
+                drawChess(x,y);
+                box.scrollTop = box.scrollHeight;
+                end = check(x,y);
+                
+                //遊戲結束停止下棋
+                if(end == 1){
+                    
+                    if(chessData[x][y] == 1){
+                        
+                        setTimeout("alert('black win!!')",200);
+                        
+                    }else if(chessData[x][y] == 2){
+                        
+                        setTimeout("alert('white win!!')",200);
+                        
+                    }
+                    
+                    drawChess = null;
+                    
+                }   
+                
+            }
+            
+            var c = document.getElementById("myCanvas");
+            var ctx = c.getContext("2d");
+            ctx.fillStyle = "#ecb27e";
+            ctx.fillRect(0,0,c.width,c.height);
+            var box = document.getElementById("textbox");
+            var step = 1;
+            
+            var end = 0;
+            var whiteOrBlack = 0;
+            
+            //宣告一個二維陣列模擬棋盤的狀態，將初始值設為0
+            var chessData = new Array(16);
+            var i,j;
+            for (i = 0;i < 16;i++) {
+                
+                chessData[i] = new Array(16);
+                
+                for (j = 0; j < 16; j++) {
+                    
+                    chessData[i][j] = 0;
+                    
+                }
+                
+            }
+            
+            drawBoard();
+            playerClick(event);
+            
+            //重新開始button
+            function restartBtn(){
+                
+                //alert("restart");
+                window.location.reload();
+                
+            }
+            
+        </script>
+        
+    </body>
+    
+</html>
