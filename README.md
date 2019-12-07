@@ -1,5 +1,4 @@
-# Gobang
-五子棋
+# 五子棋
 <br>
 html/css + javascript
 <br><br>
